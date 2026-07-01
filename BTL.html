@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArtGallery - Triển Lãm & Quản Trị Nghệ Thuật Cao Cấp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- PHỐI MÀU & ĐỊNH DẠNG THEO PHONG CÁCH SANG TRỌNG --- */
+        :root {
+            --bg-canvas: #f8f7f4;       
+            --primary-dark: #111111;    
+            --accent-gold: #c5a880;     
+            --accent-red: #ef233c;      
+            --text-main: #2b2d42;       
+            --footer-bg: #16181b;       
+        }
+
+        body { 
+            background-color: var(--bg-canvas); 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        h1, h2, h3, h4, .artwork-title, .curator-title { font-family: 'Playfair Display', serif; }
+        
+        .main-wrapper { flex: 1; }
+
+        /* Giao diện Header */
+        .custom-nav {
+            background: var(--primary-dark);
+            border-bottom: 2px solid var(--accent-gold);
+        }
+
+        /* Menu lọc phong cách */
+        .filter-btn {
+            border: 1px solid #ced4da;
+            background: #fff;
+            color: var(--primary-dark);
+            padding: 8px 24px;
+            border-radius: 30px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary-dark);
+            color: #fff;
+            border-color: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* THIẾT KẾ MASONRY RESPONSIVE */
+        .masonry-grid {
+            column-count: 3;
+            column-gap: 24px;
+        }
+        @media (max-width: 992px) { .masonry-grid { column-count: 2; } }
+        @media (max-width: 576px) { .masonry-grid { column-count: 1; } }
+
+        .artwork-item {
+            break-inside: avoid;
+            margin-bottom: 24px;
+        }
+        .artwork-card { 
+            background: #fff;
+            border: none; 
+            border-radius: 14px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .artwork-card:hover { 
+            transform: translateY(-6px); 
+            box-shadow: 0 20px 35px rgba(0,0,0,0.08) !important; 
+        }
+
+        .img-container { overflow: hidden; position: relative; background-color: #eaeaea; }
+        .artwork-img {
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 100%;
+            display: block;
+            height: auto;
+        }
+        .artwork-card:hover .artwork-img { transform: scale(1.04); }
+
+        /* Nút Like */
+        .like-btn { cursor: pointer; transition: transform 0.2s, color 0.2s; color: #a0aec0; }
+        .like-btn:hover { transform: scale(1.25); }
+        .liked { color: var(--accent-red) !important; animation: heartPop 0.35s linear; }
+        @keyframes heartPop {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.4); }
+            60% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+
+        .art-menu-toggle { cursor: pointer; padding: 5px 10px; color: #6c757d; }
+        .art-menu-toggle:hover { color: var(--primary-dark); }
+
+        .nav-pills-custom .nav-link {
+            color: var(--primary-dark);
+            font-weight: 600;
+            border: 1px solid #dee2e6;
+            margin: 0 5px;
+            border-radius: 8px;
+            padding: 10px 20px;
+        }
+        .nav-pills-custom .nav-link.active {
+            background-color: var(--primary-dark);
+            color: #fff;
+            border-color: var(--primary-dark);
+        }
+
+        /* THIẾT KẾ FOOTER HIỆN ĐẠI */
+        .modern-footer {
+            background-color: var(--footer-bg);
+            color: #bdc3c7;
+            padding: 60px 0 20px 0;
+            margin-top: 60px;
+            font-size: 0.9rem;
+            border-top: 3px solid var(--accent-gold);
+        }
+        .modern-footer h5 {
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 8px;
+        }
+        .modern-footer h5::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 35px;
+            height: 2px;
+            background-color: var(--accent-gold);
+        }
+        .modern-footer a {
+            color: #a0aec0;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .modern-footer a:hover {
+            color: var(--accent-gold);
+        }
+        .footer-social-icons a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            background-color: #24272c;
+            border-radius: 50%;
+            margin-right: 10px;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        .footer-social-icons a:hover {
+            background-color: var(--accent-gold);
+            transform: translateY(-3px);
+        }
+        .footer-bottom {
+            border-top: 1px solid #24272c;
+            padding-top: 20px;
+            margin-top: 40px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-dark custom-nav mb-4 shadow sticky-top">
+            <div class="container">
+                <a class="navbar-brand fw-bold fs-3" href="#">🏛️ ArtGallery</a>
+                <span class="navbar-text text-white-50 d-none d-md-inline">Không Gian Giám Tuyển Triển Lãm Số</span>
+            </div>
+        </nav>
+
+        <div class="container mb-5">
+            
+            <div class="d-flex justify-content-center mb-5">
+                <ul class="nav nav-pills nav-pills-custom" id="roleTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="public-tab" data-bs-toggle="tab" data-bs-target="#public-space" type="button" role="tab"><i class="fa-solid fa-globe me-1"></i> Sảnh Triển Lãm (Public)</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="artist-tab" data-bs-toggle="tab" data-bs-target="#artist-space" type="button" role="tab"><i class="fa-solid fa-palette me-1"></i> Không Gian Sáng Tác</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin-space" type="button" role="tab"><i class="fa-solid fa-user-shield me-1"></i> Quản Trị Hệ Thống <span class="badge bg-danger ms-1" id="pending-badge">0</span></button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="tab-content" id="roleTabsContent">
+                
+                <div class="tab-pane fade show active" id="public-space" role="tabpanel">
+                    
+                    <div class="card border-0 shadow-sm p-4 p-md-5 mb-5 bg-white rounded-3">
+                        <div class="row align-items-center">
+                            <div class="col-lg-8">
+                                <span class="text-uppercase text-muted fw-bold small tracking-wider">Không gian Giám tuyển số</span>
+                                <h2 class="curator-title fw-bold mt-2 mb-3 fs-1 text-dark">TỎA V – ĐIỂM CHẠM KHOA HỌC</h2>
+                                <p class="text-secondary lead fs-6 style-text" style="text-align: justify; line-height: 1.7;">
+                                    Trong bối cảnh thế kỷ 21 – nơi công nghệ và trí tuệ nhân tạo đang tái cấu trúc ý niệm về con người và văn hóa – không gian đối thoại mở mở ra giữa hai miền nhận thức: <strong>Nghệ thuật và Khoa học</strong>. Nhằm tôn vinh những thành tựu sáng tạo vì sự phát triển bền vững và tương lai nhân loại, chuỗi tác phẩm nỗ lực gắn kết công chúng thông qua điểm chạm nghệ thuật cùng những trải nghiệm đa giác quan phong phú. Tại đây, khoa học không còn xa lạ mà trở nên gần gũi, đầy cảm xúc, mời gọi người xem cùng suy ngẫm về việc chúng ta sẽ đi về đâu dưới ánh sáng của tri thức.
+                                </p>
+                                <div class="mt-4 text-muted small">
+                                    <i class="fa-solid fa-calendar-days me-2"></i> <strong>Thời gian trưng bày:</strong> Từ nay đến hết 28/02/2026 &nbsp;&bull;&nbsp; <i class="fa-solid fa-location-dot ms-2 me-2"></i> <strong>Giám tuyển:</strong> Hội đồng Nghệ thuật Đương đại
+                                </div>
+                            </div>
+                            <div class="col-lg-4 d-none d-lg-block">
+                                <div class="p-3 border-start border-2 border-warning-subtle custom-quote">
+                                    <h5 class="fst-italic text-muted">"Điều gì khiến thế giới tiếp tục vận động? Sự sống, vật chất hay trí tưởng tượng vô tận của con người?"</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mb-5" id="filter-container">
+                        <button class="filter-btn active" data-filter="all">Tất cả xu hướng</button>
+                        <button class="filter-btn" data-filter="Ấn tượng">Trường phái Ấn tượng</button>
+                        <button class="filter-btn" data-filter="Hiện thực">Chủ nghĩa Hiện thực</button>
+                        <button class="filter-btn" data-filter="Trừu tượng">Nghệ thuật Trừu tượng</button>
+                    </div>
+
+                    <div class="masonry-grid" id="gallery-grid">
+                        </div>
+                </div>
+
+                <div class="tab-pane fade" id="artist-space" role="tabpanel">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-6 col-md-8">
+                            <div class="card p-4 shadow-sm border-0 rounded-3 bg-white">
+                                <h4 class="fw-bold mb-3"><i class="fa-solid fa-upload text-warning me-1"></i> Đăng ký lưu trữ tuyệt tác mới</h4>
+                                <p class="text-muted small">Mỗi tác phẩm gửi lên là một câu hỏi nền tảng đặt lại vị trí của con người trong hệ sinh thái rộng lớn của tri thức và sự sống.</p>
+                                <hr>
+                                <form id="artist-upload-form">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Tên tác phẩm</label>
+                                        <input type="text" id="form-title" class="form-control" placeholder="Ví dụ: Tiếng Vọng Khối Kỷ Niệm..." required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Nghệ sĩ / Tác giả</label>
+                                        <input type="text" id="form-artist" class="form-control" placeholder="Nhập nghệ danh hoặc tên đầy đủ..." required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Khuynh hướng sáng tác</label>
+                                        <select id="form-style" class="form-select">
+                                            <option value="Ấn tượng">Trường phái Ấn tượng</option>
+                                            <option value="Hiện thực">Chủ nghĩa Hiện thực</option>
+                                            <option value="Trừu tượng">Nghệ thuật Trừu tượng</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">Đường dẫn hình ảnh (URL)</label>
+                                        <input type="url" id="form-img" class="form-control" placeholder="https://images.unsplash.com/..." required>
+                                        <div class="form-text small text-muted">Vui lòng cung cấp link hình ảnh độ phân giải cao để đảm bảo trải nghiệm thưởng lãm đa giác quan.</div>
+                                    </div>
+                                    <button type="submit" class="btn btn-dark w-100 py-2.5 fw-bold"><i class="fa-solid fa-paper-plane me-1"></i> Nộp Tác Phẩm Về Hội Đồng</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="admin-space" role="tabpanel">
+                    <div class="alert alert-dark d-flex align-items-center border-0 shadow-sm mb-4" role="alert">
+                        <i class="fa-solid fa-user-shield me-3 fa-lg text-warning"></i>
+                        <div>
+                            <strong>Hướng dẫn Giám sát viên:</strong> Thẩm định kỹ lưỡng các tác phẩm mới nộp. Đảm bảo nội dung truyền tải đúng tinh thần gắn kết công chúng với các giá trị văn hóa chân thực, không vi phạm bản quyền nghệ thuật.
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6 col-md-4">
+                            <div class="card p-3 border-0 shadow-sm bg-white rounded-3 d-flex flex-row align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-muted small fw-bold text-uppercase">Tương tác công chúng</div>
+                                    <h2 class="fw-bold m-0 text-danger" id="stat-total-likes">0</h2>
+                                </div>
+                                <i class="fa-solid fa-heart fa-2x text-danger opacity-25"></i>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-4">
+                            <div class="card p-3 border-0 shadow-sm bg-white rounded-3 d-flex flex-row align-items-center justify-content-between">
+                                <div>
+                                    <div class="text-muted small fw-bold text-uppercase">Kiệt tác đang trực tuyến</div>
+                                    <h2 class="fw-bold m-0 text-success" id="stat-total-approved">0</h2>
+                                </div>
+                                <i class="fa-solid fa-circle-check fa-2x text-success opacity-25"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-3 p-4 bg-white">
+                        <h4 class="fw-bold mb-4"><i class="fa-solid fa-tasks me-1"></i> Danh sách thẩm định dữ liệu trưng bày</h4>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Hình ảnh</th>
+                                        <th>Tên tác phẩm</th>
+                                        <th>Nghệ sĩ</th>
+                                        <th>Khuynh hướng</th>
+                                        <th>Trạng thái</th>
+                                        <th class="text-end">Hành động xử lý</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <footer class="modern-footer">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <h5 class="text-uppercase text-white">🏛️ ArtGallery Hub</h5>
+                    <p class="text-muted mt-3" style="line-height: 1.6; text-align: justify;">
+                        Song hành cùng các trung tâm nghệ thuật đương đại, ArtGallery là không gian số hóa nỗ lực gắn kết công chúng thông qua trải nghiệm thị giác đa chiều, đưa những khái niệm học thuật và nghệ thuật đến gần hơn với cuộc sống.
+                    </p>
+                    <div class="footer-social-icons mt-4">
+                        <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#"><i class="fa-brands fa-pinterest-p"></i></a>
+                        <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 col-6">
+                    <h5>Hoạt động chính</h5>
+                    <ul class="list-unstyled mt-3">
+                        <li class="mb-2"><a href="#">Tọa đàm nghệ thuật</a></li>
+                        <li class="mb-2"><a href="#">Workshop sáng tác</a></li>
+                        <li class="mb-2"><a href="#">Art Tour trải nghiệm</a></li>
+                        <li class="mb-2"><a href="#">Đấu giá lưu trữ số</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 col-6">
+                    <h5>Khuynh hướng</h5>
+                    <ul class="list-unstyled mt-3">
+                        <li class="mb-2"><a href="#">Ấn tượng đương đại</a></li>
+                        <li class="mb-2"><a href="#">Hiện thực cấu trúc</a></li>
+                        <li class="mb-2"><a href="#">Trừu tượng biểu hiện</a></li>
+                        <li class="mb-2"><a href="#">Nghệ thuật sinh thái</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <h5>Bản tin Triển lãm</h5>
+                    <p class="text-muted mt-3">Nhận thông tin cập nhật sớm nhất về các chuỗi hoạt động, tọa đàm chuyên sâu và giám tuyển mới.</p>
+                    <div class="input-group mt-3">
+                        <input type="email" class="form-control bg-dark border-secondary text-white" placeholder="Địa chỉ email của bạn..." aria-label="Email">
+                        <button class="btn btn-outline-warning" type="button" onclick="alert('Hệ thống đã ghi nhận email đăng ký của bạn!')">Đăng ký</button>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom text-center text-muted">
+                <p class="m-0">&copy; 2026 ArtGallery Platform. Dự án lấy cảm hứng từ tinh thần đối thoại Nghệ thuật & Khoa học đương đại.</p>
+                <p class="small text-white-50 mt-1" style="font-size: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;"> ArtGallery <=> Trần Quốc Huy , Lê Quốc Hùng , Hoàng Tuấn Anh</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold">Hiệu đính hồ sơ kiệt tác</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-form">
+                        <input type="hidden" id="edit-id">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên tranh</label>
+                            <input type="text" id="edit-title" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nghệ sĩ</label>
+                            <input type="text" id="edit-artist" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Trường phái</label>
+                            <select id="edit-style" class="form-select">
+                                <option value="Ấn tượng">Trường phái Ấn tượng</option>
+                                <option value="Hiện thực">Chủ nghĩa Hiện thực</option>
+                                <option value="Trừu tượng">Nghệ thuật Trừu tượng</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Lưu thông tin hiệu đính</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <script>
+        // --- XỬ LÝ DỮ LIỆU SÂU SẮC ĐẬM CHẤT GIÁM TUYỂN ---
+        const DEMO_ARTWORKS = [
+            { id: "art-1", title: "Điểm Chạm Hệ Sinh Thái", artist: "Đăng Ninh & Trịnh Minh Tiến", style: "Hiện thực", img: "https://images.unsplash.com/photo-1580136579312-94651dfd596d?w=500&q=80", likes: 245, status: "approved" },
+            { id: "art-2", title: "Khúc Giao Mùa Đầu Hạ", artist: "Lê Thiết Cương", style: "Ấn tượng", img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=500&q=80", likes: 112, status: "approved" },
+            { id: "art-3", title: "Ảo Ảnh Khối Trí Tuệ", artist: "Phạm Minh Hiếu", style: "Trừu tượng", img: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=500&q=80", likes: 89, status: "approved" },
+            { id: "art-4", title: "Vũ Trụ Vật Chất & Sự Sống", artist: "Lê Giang", style: "Trừu tượng", img: "https://images.unsplash.com/photo-1549887534-1541e9326642?w=500&q=80", likes: 156, status: "approved" },
+            { id: "art-5", title: "Đối Thoại Xuyên Không Gian", artist: "Bùi Quốc Khánh", style: "Hiện thực", img: "https://images.unsplash.com/photo-1576016770956-debb63d900df?w=500&q=80", likes: 201, status: "approved" },
+            { id: "art-6", title: "Tái Cấu Trúc Ý Niệm (Hàng chờ)", artist: "Vũ Bình Minh", style: "Ấn tượng", img: "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=500&q=80", likes: 0, status: "pending" }
+        ];
+
+        if (!localStorage.getItem('gallery_db')) {
+            localStorage.setItem('gallery_db', JSON.stringify(DEMO_ARTWORKS));
+            localStorage.setItem('user_liked', JSON.stringify([]));
+        }
+
+        function readDB() { return JSON.parse(localStorage.getItem('gallery_db')); }
+        function writeDB(data) { localStorage.setItem('gallery_db', JSON.stringify(data)); }
+        function readLikes() { return JSON.parse(localStorage.getItem('user_liked')); }
+        function writeLikes(data) { localStorage.setItem('user_liked', JSON.stringify(data)); }
+
+        function simulatePutLikeAPI(artId, currentAction, callback) {
+            setTimeout(() => {
+                let db = readDB();
+                let userLiked = readLikes();
+                let art = db.find(item => item.id === artId);
+
+                if (art) {
+                    if (currentAction === 'like') {
+                        art.likes += 1;
+                        userLiked.push(artId);
+                    } else {
+                        art.likes -= 1;
+                        userLiked = userLiked.filter(id => id !== artId);
+                    }
+                    writeDB(db);
+                    writeLikes(userLiked);
+                    callback({ success: true, updatedLikes: art.likes });
+                }
+            }, 100);
+        }
+
+        function appRendering() {
+            const db = readDB();
+            const userLiked = readLikes();
+            const activeFilter = $('#filter-container .filter-btn.active').data('filter');
+
+            let publicGridHtml = '';
+            let adminTableHtml = '';
+            let totalLikesCount = 0;
+            let approvedCount = 0;
+            let pendingCount = 0;
+
+            db.forEach(art => {
+                if (art.status === 'approved') {
+                    totalLikesCount += art.likes;
+                    approvedCount++;
+
+                    if (activeFilter === 'all' || art.style === activeFilter) {
+                        const isLiked = userLiked.includes(art.id);
+                        const heartStyle = isLiked ? 'fa-solid fa-heart liked' : 'fa-regular fa-heart';
+
+                        publicGridHtml += `
+                            <div class="artwork-item">
+                                <div class="card artwork-card">
+                                    <div class="img-container">
+                                        <img src="${art.img}" class="artwork-img" alt="${art.title}">
+                                    </div>
+                                    <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <h5 class="artwork-title fw-bold fs-5 text-dark m-0">${art.title}</h5>
+                                            
+                                            <div class="dropdown">
+                                                <i class="fa-solid fa-ellipsis-v art-menu-toggle" data-bs-toggle="dropdown"></i>
+                                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border">
+                                                    <li><a class="dropdown-item small text-muted" href="#" onclick="alert('Đã sao chép liên kết giám tuyển!')"><i class="fa-solid fa-share-nodes me-2"></i>Chia sẻ tác phẩm</a></li>
+                                                    <li><a class="dropdown-item small text-muted" href="#" onclick="alert('Tính năng Audioguide (Thuyết minh) đang được thiết lập!')"><i class="fa-solid fa-headphones me-2"></i>Nghe thuyết minh audio</a></li>
+                                                    <li><a class="dropdown-item small text-muted" href="${art.img}" target="_blank"><i class="fa-solid fa-expand me-2"></i>Xem bản phân giải gốc</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <p class="text-muted small mb-3">Nghệ sĩ: <strong>${art.artist}</strong></p>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                            <div class="like-container">
+                                                <i class="${heartStyle} fa-lg like-btn" data-id="${art.id}"></i>
+                                                <span class="ms-1 fw-bold count-display">${art.likes}</span>
+                                            </div>
+                                            <span class="badge bg-light text-secondary border rounded-pill">${art.style}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                    }
+                } else if (art.status === 'pending') {
+                    pendingCount++;
+                }
+
+                const badgeStatus = art.status === 'approved' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning';
+                const textStatus = art.status === 'approved' ? 'Đã trực tuyến' : 'Chờ thẩm định';
+                
+                adminTableHtml += `
+                    <tr>
+                        <td><img src="${art.img}" style="width:50px; height:50px; object-fit:cover; border-radius:6px;"></td>
+                        <td><strong>${art.title}</strong></td>
+                        <td>${art.artist}</td>
+                        <td><span class="badge bg-light text-dark border">${art.style}</span></td>
+                        <td><span class="badge ${badgeStatus}">${textStatus}</span></td>
+                        <td class="text-end">
+                            ${art.status === 'pending' ? `<button class="btn btn-sm btn-success btn-approve me-1" data-id="${art.id}"><i class="fa-solid fa-check"></i> Phê duyệt</button>` : ''}
+                            <button class="btn btn-sm btn-outline-primary btn-edit me-1" data-id="${art.id}"><i class="fa-solid fa-pen"></i> Sửa</button>
+                            <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${art.id}"><i class="fa-solid fa-trash"></i> Xóa</button>
+                        </td>
+                    </tr>`;
+            });
+
+            $('#gallery-grid').html(publicGridHtml || '<div class="text-center text-muted col-12 py-5">Chưa có tác phẩm nào thuộc khuynh hướng này được trực tuyến.</div>');
+            $('#admin-table-body').html(adminTableHtml);
+            
+            $('#stat-total-likes').text(totalLikesCount);
+            $('#stat-total-approved').text(approvedCount);
+            $('#pending-badge').text(pendingCount).toggle(pendingCount > 0);
+        }
+
+        $(document).ready(function() {
+            appRendering();
+
+            $('#filter-container').on('click', '.filter-btn', function() {
+                $('.filter-btn').removeClass('active');
+                $(this).addClass('active');
+                appRendering();
+            });
+
+            $('#gallery-grid').on('click', '.like-btn', function() {
+                const $heart = $(this);
+                const artId = $heart.data('id');
+                const isLiked = $heart.hasClass('liked');
+                const action = isLiked ? 'unlike' : 'like';
+
+                simulatePutLikeAPI(artId, action, function(res) {
+                    if (res.success) {
+                        if (action === 'like') $heart.removeClass('fa-regular').addClass('fa-solid liked');
+                        else $heart.removeClass('fa-solid liked').addClass('fa-regular');
+                        
+                        $heart.siblings('.count-display').text(res.updatedLikes);
+                        let oldTotal = parseInt($('#stat-total-likes').text());
+                        $('#stat-total-likes').text(action === 'like' ? oldTotal + 1 : oldTotal - 1);
+                    }
+                });
+            });
+
+            $('#artist-upload-form').on('submit', function(e) {
+                e.preventDefault();
+                let db = readDB();
+
+                db.push({
+                    id: "art-" + Date.now(),
+                    title: $('#form-title').val(),
+                    artist: $('#form-artist').val(),
+                    style: $('#form-style').val(),
+                    img: $('#form-img').val(),
+                    likes: 0,
+                    status: "pending"
+                });
+
+                writeDB(db);
+                this.reset();
+                appRendering();
+                alert("Tác phẩm đã được chuyển tới Hội đồng Thẩm định!");
+                bootstrap.Tab.getInstance(document.querySelector('#admin-tab')).show();
+            });
+
+            $('#admin-table-body').on('click', '.btn-approve', function() {
+                const id = $(this).data('id');
+                let db = readDB();
+                let item = db.find(x => x.id === id);
+                if (item) item.status = 'approved';
+                writeDB(db);
+                appRendering();
+            });
+
+            $('#admin-table-body').on('click', '.btn-delete', function() {
+                if (confirm("Gỡ bỏ vĩnh viễn dữ liệu tác phẩm này khỏi hệ thống số?")) {
+                    const id = $(this).data('id');
+                    let db = readDB();
+                    db = db.filter(x => x.id !== id);
+                    writeDB(db);
+                    appRendering();
+                }
+            });
+
+            $('#admin-table-body').on('click', '.btn-edit', function() {
+                const id = $(this).data('id');
+                const db = readDB();
+                const item = db.find(x => x.id === id);
+                
+                if (item) {
+                    $('#edit-id').val(item.id);
+                    $('#edit-title').val(item.title);
+                    $('#edit-artist').val(item.artist);
+                    $('#edit-style').val(item.style);
+                    const myModal = new bootstrap.Modal(document.getElementById('editModal'));
+                    myModal.show();
+                }
+            });
+
+            $('#edit-form').on('submit', function(e) {
+                e.preventDefault();
+                const id = $('#edit-id').val();
+                let db = readDB();
+                let item = db.find(x => x.id === id);
+                
+                if (item) {
+                    item.title = $('#edit-title').val();
+                    item.artist = $('#edit-artist').val();
+                    item.style = $('#edit-style').val();
+                    writeDB(db);
+                    appRendering();
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
