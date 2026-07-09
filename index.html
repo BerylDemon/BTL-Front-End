@@ -409,45 +409,164 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
     <script>
-        // --- XỬ LÝ DỮ LIỆU SÂU SẮC ĐẬM CHẤT GIÁM TUYỂN ---
+        const API_URL = 'https://6a02e90a0d92f63dd25477cb.mockapi.io/api/BTL/ARTWORKS';
+        const STORAGE_KEY = 'gallery_db';
+        const LIKES_STORAGE_KEY = 'user_liked';
+
         const DEMO_ARTWORKS = [
-            { id: "art-1", title: "Điểm Chạm Hệ Sinh Thái", artist: "Đăng Ninh & Trịnh Minh Tiến", style: "Hiện thực", img: "https://images.unsplash.com/photo-1580136579312-94651dfd596d?w=500&q=80", likes: 245, status: "approved" },
-            { id: "art-2", title: "Khúc Giao Mùa Đầu Hạ", artist: "Lê Thiết Cương", style: "Ấn tượng", img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=500&q=80", likes: 112, status: "approved" },
-            { id: "art-3", title: "Ảo Ảnh Khối Trí Tuệ", artist: "Phạm Minh Hiếu", style: "Trừu tượng", img: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=500&q=80", likes: 89, status: "approved" },
-            { id: "art-4", title: "Vũ Trụ Vật Chất & Sự Sống", artist: "Lê Giang", style: "Trừu tượng", img: "https://images.unsplash.com/photo-1549887534-1541e9326642?w=500&q=80", likes: 156, status: "approved" },
-            { id: "art-5", title: "Đối Thoại Xuyên Không Gian", artist: "Bùi Quốc Khánh", style: "Hiện thực", img: "https://images.unsplash.com/photo-1576016770956-debb63d900df?w=500&q=80", likes: 201, status: "approved" },
-            { id: "art-6", title: "Tái Cấu Trúc Ý Niệm (Hàng chờ)", artist: "Vũ Bình Minh", style: "Ấn tượng", img: "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=500&q=80", likes: 0, status: "pending" }
+            { id: 'art-1', title: 'Điểm Chạm Hệ Sinh Thái', artist: 'Đăng Ninh & Trịnh Minh Tiến', style: 'Hiện thực', img: 'https://images.unsplash.com/photo-1580136579312-94651dfd596d?w=500&q=80', likes: 245, status: 'approved' },
+            { id: 'art-2', title: 'Khúc Giao Mùa Đầu Hạ', artist: 'Lê Thiết Cương', style: 'Ấn tượng', img: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=500&q=80', likes: 112, status: 'approved' },
+            { id: 'art-3', title: 'Ảo Ảnh Khối Trí Tuệ', artist: 'Phạm Minh Hiếu', style: 'Trừu tượng', img: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=500&q=80', likes: 89, status: 'approved' },
+            { id: 'art-4', title: 'Vũ Trụ Vật Chất & Sự Sống', artist: 'Lê Giang', style: 'Trừu tượng', img: 'https://images.unsplash.com/photo-1549887534-1541e9326642?w=500&q=80', likes: 156, status: 'approved' },
+            { id: 'art-5', title: 'Đối Thoại Xuyên Không Gian', artist: 'Bùi Quốc Khánh', style: 'Hiện thực', img: 'https://images.unsplash.com/photo-1576016770956-debb63d900df?w=500&q=80', likes: 201, status: 'approved' },
+            { id: 'art-6', title: 'Tái Cấu Trúc Ý Niệm (Hàng chờ)', artist: 'Vũ Bình Minh', style: 'Ấn tượng', img: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=500&q=80', likes: 0, status: 'pending' }
         ];
 
-        if (!localStorage.getItem('gallery_db')) {
-            localStorage.setItem('gallery_db', JSON.stringify(DEMO_ARTWORKS));
-            localStorage.setItem('user_liked', JSON.stringify([]));
+        function seedStorage() {
+            if (!localStorage.getItem(STORAGE_KEY)) {
+                writeDB(DEMO_ARTWORKS.map(normalizeArtwork));
+            }
+            if (!localStorage.getItem(LIKES_STORAGE_KEY)) {
+                writeLikes([]);
+            }
         }
 
-        function readDB() { return JSON.parse(localStorage.getItem('gallery_db')); }
-        function writeDB(data) { localStorage.setItem('gallery_db', JSON.stringify(data)); }
-        function readLikes() { return JSON.parse(localStorage.getItem('user_liked')); }
-        function writeLikes(data) { localStorage.setItem('user_liked', JSON.stringify(data)); }
+        function normalizeArtwork(art) {
+            return {
+                id: art.id || art._id || '',
+                title: art.title || '',
+                artist: art.artist || '',
+                style: art.style || 'Ấn tượng',
+                img: art.img || '',
+                likes: Number(art.likes) || 0,
+                status: art.status || 'approved'
+            };
+        }
 
-        function simulatePutLikeAPI(artId, currentAction, callback) {
-            setTimeout(() => {
-                let db = readDB();
-                let userLiked = readLikes();
-                let art = db.find(item => item.id === artId);
+        function readDB() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            } catch (error) {
+                return [];
+            }
+        }
 
-                if (art) {
-                    if (currentAction === 'like') {
-                        art.likes += 1;
-                        userLiked.push(artId);
-                    } else {
-                        art.likes -= 1;
-                        userLiked = userLiked.filter(id => id !== artId);
-                    }
-                    writeDB(db);
-                    writeLikes(userLiked);
-                    callback({ success: true, updatedLikes: art.likes });
+        function writeDB(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function readLikes() {
+            try {
+                return JSON.parse(localStorage.getItem(LIKES_STORAGE_KEY) || '[]');
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function writeLikes(data) {
+            localStorage.setItem(LIKES_STORAGE_KEY, JSON.stringify(data));
+        }
+
+        async function requestJSON(url, options = {}) {
+            const response = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+
+            if (!response.ok) {
+                throw new Error(`Request failed with status ${response.status}`);
+            }
+
+            if (response.status === 204) {
+                return null;
+            }
+
+            return response.json();
+        }
+
+        async function loadArtworksFromAPI() {
+            try {
+                const artworks = await requestJSON(API_URL);
+                const normalized = (Array.isArray(artworks) ? artworks : []).map(normalizeArtwork);
+                if (normalized.length) {
+                    writeDB(normalized);
+                    return normalized;
                 }
-            }, 100);
+            } catch (error) {
+                console.warn('Unable to load artworks from the mock API. Falling back to local data.', error);
+            }
+
+            const fallback = readDB();
+            return fallback.length ? fallback : DEMO_ARTWORKS.map(normalizeArtwork);
+        }
+
+        async function createArtworkInAPI(payload) {
+            const created = await requestJSON(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(normalizeArtwork({ ...payload, likes: 0, status: 'pending' }))
+            });
+            const normalized = normalizeArtwork(created);
+            const db = readDB();
+            db.unshift(normalized);
+            writeDB(db);
+            return normalized;
+        }
+
+        async function updateArtworkInAPI(id, payload) {
+            const updated = await requestJSON(`${API_URL}/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(normalizeArtwork({ ...payload, id }))
+            });
+            const normalized = normalizeArtwork(updated);
+            const db = readDB();
+            const index = db.findIndex(item => String(item.id) === String(id));
+            if (index !== -1) {
+                db[index] = normalized;
+                writeDB(db);
+            }
+            return normalized;
+        }
+
+        async function deleteArtworkInAPI(id) {
+            await requestJSON(`${API_URL}/${id}`, { method: 'DELETE' });
+            const db = readDB().filter(item => String(item.id) !== String(id));
+            writeDB(db);
+            return db;
+        }
+
+        async function toggleLikeInAPI(artId, action) {
+            const db = readDB();
+            const art = db.find(item => String(item.id) === String(artId));
+            if (!art) {
+                throw new Error('Artwork not found');
+            }
+
+            const nextLikes = action === 'like' ? art.likes + 1 : Math.max(0, art.likes - 1);
+            const updated = await requestJSON(`${API_URL}/${artId}`, {
+                method: 'PUT',
+                body: JSON.stringify(normalizeArtwork({ ...art, likes: nextLikes }))
+            });
+
+            const normalized = normalizeArtwork(updated);
+            const nextDb = readDB();
+            const index = nextDb.findIndex(item => String(item.id) === String(artId));
+            if (index !== -1) {
+                nextDb[index] = normalized;
+                writeDB(nextDb);
+            }
+
+            const userLiked = readLikes();
+            const nextLiked = action === 'like'
+                ? [...new Set([...userLiked, artId])]
+                : userLiked.filter(id => String(id) !== String(artId));
+            writeLikes(nextLiked);
+
+            return { success: true, updatedLikes: normalized.likes };
+        }
+
+        function showLoadingState() {
+            $('#gallery-grid').html('<div class="text-center text-muted py-5">Đang tải dữ liệu từ API...</div>');
+            $('#admin-table-body').html('<tr><td colspan="6" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>');
         }
 
         function appRendering() {
@@ -467,7 +586,7 @@
                     approvedCount++;
 
                     if (activeFilter === 'all' || art.style === activeFilter) {
-                        const isLiked = userLiked.includes(art.id);
+                        const isLiked = userLiked.includes(String(art.id));
                         const heartStyle = isLiked ? 'fa-solid fa-heart liked' : 'fa-regular fa-heart';
 
                         publicGridHtml += `
@@ -532,7 +651,10 @@
             $('#pending-badge').text(pendingCount).toggle(pendingCount > 0);
         }
 
-        $(document).ready(function() {
+        $(document).ready(async function() {
+            seedStorage();
+            showLoadingState();
+            await loadArtworksFromAPI();
             appRendering();
 
             $('#filter-container').on('click', '.filter-btn', function() {
@@ -541,68 +663,81 @@
                 appRendering();
             });
 
-            $('#gallery-grid').on('click', '.like-btn', function() {
+            $('#gallery-grid').on('click', '.like-btn', async function() {
                 const $heart = $(this);
                 const artId = $heart.data('id');
                 const isLiked = $heart.hasClass('liked');
                 const action = isLiked ? 'unlike' : 'like';
 
-                simulatePutLikeAPI(artId, action, function(res) {
+                try {
+                    const res = await toggleLikeInAPI(artId, action);
                     if (res.success) {
-                        if (action === 'like') $heart.removeClass('fa-regular').addClass('fa-solid liked');
-                        else $heart.removeClass('fa-solid liked').addClass('fa-regular');
-                        
+                        if (action === 'like') {
+                            $heart.removeClass('fa-regular').addClass('fa-solid liked');
+                        } else {
+                            $heart.removeClass('fa-solid liked').addClass('fa-regular');
+                        }
                         $heart.siblings('.count-display').text(res.updatedLikes);
                         let oldTotal = parseInt($('#stat-total-likes').text());
                         $('#stat-total-likes').text(action === 'like' ? oldTotal + 1 : oldTotal - 1);
                     }
-                });
+                } catch (error) {
+                    console.error(error);
+                    alert('Không thể cập nhật lượt thích lúc này.');
+                }
             });
 
-            $('#artist-upload-form').on('submit', function(e) {
+            $('#artist-upload-form').on('submit', async function(e) {
                 e.preventDefault();
-                let db = readDB();
 
-                db.push({
-                    id: "art-" + Date.now(),
-                    title: $('#form-title').val(),
-                    artist: $('#form-artist').val(),
-                    style: $('#form-style').val(),
-                    img: $('#form-img').val(),
-                    likes: 0,
-                    status: "pending"
-                });
+                try {
+                    await createArtworkInAPI({
+                        title: $('#form-title').val(),
+                        artist: $('#form-artist').val(),
+                        style: $('#form-style').val(),
+                        img: $('#form-img').val()
+                    });
 
-                writeDB(db);
-                this.reset();
-                appRendering();
-                alert("Tác phẩm đã được chuyển tới Hội đồng Thẩm định!");
-                bootstrap.Tab.getInstance(document.querySelector('#admin-tab')).show();
-            });
-
-            $('#admin-table-body').on('click', '.btn-approve', function() {
-                const id = $(this).data('id');
-                let db = readDB();
-                let item = db.find(x => x.id === id);
-                if (item) item.status = 'approved';
-                writeDB(db);
-                appRendering();
-            });
-
-            $('#admin-table-body').on('click', '.btn-delete', function() {
-                if (confirm("Gỡ bỏ vĩnh viễn dữ liệu tác phẩm này khỏi hệ thống số?")) {
-                    const id = $(this).data('id');
-                    let db = readDB();
-                    db = db.filter(x => x.id !== id);
-                    writeDB(db);
+                    this.reset();
                     appRendering();
+                    alert('Tác phẩm đã được chuyển tới Hội đồng Thẩm định!');
+                    bootstrap.Tab.getInstance(document.querySelector('#admin-tab')).show();
+                } catch (error) {
+                    console.error(error);
+                    alert('Không thể gửi tác phẩm lên API lúc này.');
+                }
+            });
+
+            $('#admin-table-body').on('click', '.btn-approve', async function() {
+                const id = $(this).data('id');
+                const item = readDB().find(x => String(x.id) === String(id));
+                if (!item) return;
+
+                try {
+                    await updateArtworkInAPI(id, { ...item, status: 'approved' });
+                    appRendering();
+                } catch (error) {
+                    console.error(error);
+                    alert('Không thể phê duyệt tác phẩm lúc này.');
+                }
+            });
+
+            $('#admin-table-body').on('click', '.btn-delete', async function() {
+                if (!confirm('Gỡ bỏ vĩnh viễn dữ liệu tác phẩm này khỏi hệ thống số?')) return;
+
+                const id = $(this).data('id');
+                try {
+                    await deleteArtworkInAPI(id);
+                    appRendering();
+                } catch (error) {
+                    console.error(error);
+                    alert('Không thể xóa tác phẩm lúc này.');
                 }
             });
 
             $('#admin-table-body').on('click', '.btn-edit', function() {
                 const id = $(this).data('id');
-                const db = readDB();
-                const item = db.find(x => x.id === id);
+                const item = readDB().find(x => String(x.id) === String(id));
                 
                 if (item) {
                     $('#edit-id').val(item.id);
@@ -614,19 +749,25 @@
                 }
             });
 
-            $('#edit-form').on('submit', function(e) {
+            $('#edit-form').on('submit', async function(e) {
                 e.preventDefault();
                 const id = $('#edit-id').val();
-                let db = readDB();
-                let item = db.find(x => x.id === id);
+                const item = readDB().find(x => String(x.id) === String(id));
                 
-                if (item) {
-                    item.title = $('#edit-title').val();
-                    item.artist = $('#edit-artist').val();
-                    item.style = $('#edit-style').val();
-                    writeDB(db);
+                if (!item) return;
+
+                try {
+                    await updateArtworkInAPI(id, {
+                        ...item,
+                        title: $('#edit-title').val(),
+                        artist: $('#edit-artist').val(),
+                        style: $('#edit-style').val()
+                    });
                     appRendering();
                     bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                } catch (error) {
+                    console.error(error);
+                    alert('Không thể cập nhật tác phẩm lúc này.');
                 }
             });
         });
